@@ -18,6 +18,9 @@ def get_volume():   #finds what vol im at
     match = re.search(r"\[(\d+)%\]", result.stdout)   #makes [75%] into 75
     return int(match.group(1))      #makes the value into 75
 
+def preset():  
+    subprocess.run(["amixer", "sset", "Master", "50%"])
+
 win = Tk()    #start of window
 win.geometry("400x200")
 
@@ -34,6 +37,13 @@ vol = Scale(   #slider
     command=set_volume   
 )
 vol.pack()
+
+
+btn = Button(win, text = "Preset 1" command=preset) #preset button
+btn.pack()
+
+
+
 v1.set(get_volume()) #sets the volume to the current volume
 
 
