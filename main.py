@@ -2,28 +2,40 @@ import tkinter as Tk
 from tkinter import *
 import subprocess
 import re
-v1 = DoubleVar()
+import shutil
+
 
 
 
 def set_volume(v1):
-    subprocess.run(["amixer", "sset", "Master", f"{int(v1)}%"])  #sets the volume
+    if shutil.which("amixer"):   #ubuntu audio system
+        subprocess.run(["amixer", "sset", "Master", f"{int(v1)}%"])  #sets the volume
+    if shutil.which("wpctl"):     #fedora audio system
+        subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", f"{int(v1)}%"])  
+    if shutil.which("pactl"):
+        subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{int(v1)}%"])  
+    
 
 def get_volume():   #finds what vol im at
-    result = subprocess.run(
-        ["amixer", "get", "Master"],
-        capture_output=True,
-        text=True
-    )
-    match = re.search(r"\[(\d+)%\]", result.stdout)   #makes [75%] into 75
-    return int(match.group(1))      #makes the value into 75
+    if shutil.which("amixer"):   #Ubuntu audio system
+        result = subprocess.run(["amixer", "get", "Master"],capture_output=True,text=True)
+        match = re.search(r"\[(\d+)%\]", result.stdout)   #makes [75%] into 75
+        return int(match.group(1))      #makes the value into 75
+    if shutil.which("wpctl"):   #fedora audio system
+        result = subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@"],capture_output=True,text=True)
+        match = re.search(r"\[(\d+)%\]", result.stdout)   
+        return int(match.group(1))      
+    if shutil.which("pactl"):
+        result = subprocess.run(["pactl", "set-sink-volume", "@DEFAULT_SINK@"],capture_output=True,text=True)
+        match = re.search(r"\[(\d+)%\]", result.stdout)   
+        return int(match.group(1))     
+    
 
-def preset():  
-    subprocess.run(["amixer", "sset", "Master", "50%"])
 
 win = Tk()    #start of window
 win.geometry("400x200")
 
+v1 = DoubleVar()
 
 Label(win, text="Volume:").pack()
 
@@ -39,8 +51,6 @@ vol = Scale(   #slider
 vol.pack()
 
 
-btn = Button(win, text = "Preset 1" command=preset) #preset button
-btn.pack()
 
 
 
@@ -48,5 +58,3 @@ v1.set(get_volume()) #sets the volume to the current volume
 
 
 win.mainloop()   #end of window
-
-
