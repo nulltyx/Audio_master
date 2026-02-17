@@ -55,14 +55,16 @@ vol = Scale(   #slider
 vol.pack()
 
 
-Button(win, text="Mute", command=mute).pack()
-Button(win, text="Unmute", command= unmute).pack()  #doesnt do anything yet
+b.Button(win, text="Mute", command=mute)
+b.pack()
+#Button(win, text="Unmute", command= unmute).pack()  #doesnt do anything yet
 
 f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],text=True).strip()  #checks if im usind dark or light mode
 if f == "'prefer-dark'":
     win.config(background="#636363") #sets dark mode on all the things
     vol.config(background="#636363")
     l.config(background="#636363")
+    b.config(background="#636363")
 else:
     pass
 
