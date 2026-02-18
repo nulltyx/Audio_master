@@ -55,18 +55,28 @@ vol = Scale(   #slider
 vol.pack()
 
 
-b.Button(win, text="Mute", command=mute)
+b=Button(win, text="Mute", command=mute)
 b.pack()
 #Button(win, text="Unmute", command= unmute).pack()  #doesnt do anything yet
-
-f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],text=True).strip()  #checks if im usind dark or light mode
-if f == "'prefer-dark'":
-    win.config(background="#636363") #sets dark mode on all the things
-    vol.config(background="#636363")
-    l.config(background="#636363")
-    b.config(background="#636363")
-else:
-    pass
+if shutil.which("amixer"): 
+    f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],text=True).strip() 
+    if f == "'prefer-dark'":
+        win.config(background="#636363")
+        vol.config(background="#636363")
+        l.config(background="#636363")
+        b.config(background="#636363")
+    else:
+        pass
+    
+elif shutil.which("wpctl"): 
+    f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],text=True).strip()  #checks if im usind dark or light mode
+    if f == "'prefer-dark'":
+        win.config(background="#636363") #sets dark mode on all the things
+        vol.config(background="#636363")
+        l.config(background="#636363")
+        b.config(background="#636363")
+    else:
+        pass
 
 v1.set(get_volume()) #sets the volume to the current volume
 
