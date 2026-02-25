@@ -19,7 +19,7 @@ def get_volume():   #finds what vol im at
         result = subprocess.run(["amixer", "get", "Master"],capture_output=True,text=True)
         match = re.search(r"\[(\d+)%\]", result.stdout)   #makes [75%] into 75
         return int(match.group(1))      #makes the value into 75
-    if shutil.which("wpctl"):   #fedora audio system
+    if shutil.which("wpctl"):   #Fedora audio system
         result = subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@"],capture_output=True,text=True)
         match = re.search(r"\[(\d+)%\]", result.stdout)   
         return int(match.group(1))      
@@ -30,7 +30,15 @@ def mute():
         subprocess.run(["amixer", "sset", "Master", "0%"])  #sets the volume
     if shutil.which("wpctl"):     #fedora audio system
         subprocess.run(["wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", "0%"])  
+def v_up():
+    new_vol = min(100, get_volume() + 1)
+    set_volume(new_vol)
+    v1.set(new_vol)
 
+def v_down():
+    new_vol = max(0, get_volume() - 1)
+    set_volume(new_vol)
+    v1.set(new_vol)
 
 win = Tk()    #start of window
 win.geometry("400x200")
@@ -52,31 +60,30 @@ vol = Scale(   #slider
     orient=HORIZONTAL,
     command=set_volume   
 )
-vol.pack()
+vol.pack(fill="x")
+
+
+
+btn_up = Button(win, text="<", command=v_down)
+btn_up.pack(side=LEFT)
+
+btn_down = Button(win, text=">", command=v_up)
+btn_down.pack(side=RIGHT)
 
 
 b=Button(win, text="Mute", command=mute)
-b.pack()
+b.pack(side=BOTTOM)
+
 #Button(win, text="Unmute", command= unmute).pack()  #doesnt do anything yet
-if shutil.which("amixer"): 
-    f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "gtk-theme"],text=True).strip() 
-    if f == "'prefer-dark'":
-        win.config(background="#636363")
-        vol.config(background="#636363")
-        l.config(background="#636363")
-        b.config(background="#636363")
-    else:
-        pass
-    
-elif shutil.which("wpctl"): 
-    f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],text=True).strip()  #checks if im usind dark or light mode
-    if f == "'prefer-dark'":
-        win.config(background="#636363") #sets dark mode on all the things
-        vol.config(background="#636363")
-        l.config(background="#636363")
-        b.config(background="#636363")
-    else:
-        pass
+
+f = subprocess.check_output(["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"],text=True).strip()  #checks if im usind dark or light mode
+if f == "'prefer-dark'":
+    win.config(background="#636363") #sets dark mode on all the things
+    vol.config(background="#636363")
+    l.config(background="#636363")
+    b.config(background="#636363")
+else:
+    pass
 
 v1.set(get_volume()) #sets the volume to the current volume
 
