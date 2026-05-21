@@ -313,7 +313,7 @@ is_dark = "dark" in theme
 if is_dark:
     apply_dark(win)   #make everything dark go thru all widget recursiv
 
-# --- cleanup when close ---
+
 def on_close():   #VERY IMPORTANT must unload eq modules when close or stay in system forever
     if eq_sink_index is not None:
         subprocess.run(["pactl", "unload-module", str(eq_sink_index)], stderr=subprocess.DEVNULL)
@@ -325,4 +325,4 @@ win.protocol("WM_DELETE_WINDOW", on_close)   #connect X button to cleanup functi
 
 v1.set(get_volume())   
 refresh_app_sliders()  
-win.mainloop()  
+win.mainloop() 
