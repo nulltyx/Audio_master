@@ -1,4 +1,4 @@
-Description
+Description:
 
 Audio Master is a Linux desktop app for controlling system audio. It is built with Python and Tkinter. It gives you control over master volume, per application volume, mute, and a basic equaliser with presets.
 
