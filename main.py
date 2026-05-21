@@ -141,6 +141,20 @@ EQ_BANDS = [   #5 band, cover main frequency range
     {"label": "Treble",   "freq": 8000},
 ]
 
+# --- eq presets ---
+# each preset is a list of 5 db values, one for each band in order: bass, low-mid, mid, high-mid, treble
+# values go from -12 to +12 db, 0 is flat/no change
+PRESETS = {
+    "Flat":         [0,    0,    0,    0,    0   ],   #boring but correct, good starting point
+    "Bass Boost":   [8,    4,    0,    0,    0   ],   #more thump, good for hip hop / edm
+    "Treble Boost": [0,    0,    0,    4,    8   ],   #more air and sparkle up top
+    "Vocal":        [-2,   0,    5,    4,    1   ],   #push midrange so voice cut thru mix
+    "Rock":         [5,    2,   -1,    2,    5   ],   #classic smiley face curve, guitars and drums
+    "Classical":    [-2,   0,    0,    3,    4   ],   #gentle, good for orchestral stuff
+    "Bass Cut":     [-8,  -4,    0,    0,    0   ],   #for when bass is way too much and hurting ur ears
+    "Loudness":     [6,    2,   -1,    2,    6   ],   #for low volume listening, brain need extra help at quiet
+}
+
 eq_module_index = None   #save module index so can unload later, very important
 eq_sink_index = None     #same for loopback module
 eq_values = [DoubleVar for _ in EQ_BANDS]   #this get replace later when build ui
@@ -197,7 +211,22 @@ def apply_eq():   #remove old eq modules and load new one with current setting
 def reset_eq():   #put all band back to 0 and remove filter
     for var in eq_vars:
         var.set(0)
+    preset_var.set("Flat")   #also reset dropdown so it match what sliders actually showing
     apply_eq()   #call apply with all zero = bypass eq
+
+def load_preset(event=None):   #called when user pick from dropdown, grab values and slam them into sliders
+    name = preset_var.get()
+    if name not in PRESETS:
+        return   #somehow picked something that doesnt exist, just bail
+    values = PRESETS[name]
+    for i, val in enumerate(values):
+        eq_vars[i].set(val)   #set each slider to what preset say
+    apply_eq()   #apply straight away, no need to press button, preset already know what it wants
+
+def on_slider_move(var_index, value):   #called when user manually drag an eq slider
+    #if user touch a slider manually, preset is probably not accurate anymore
+    #so set dropdown back to custom so they know they diverged from the preset
+    preset_var.set("Custom")
 
 def show_main():   #go to main page
     eq_page.pack_forget()
@@ -273,6 +302,19 @@ eq_top.pack(fill="x", padx=5, pady=5)
 Button(eq_top, text="‹ Back", command=show_main).pack(side=LEFT)   #go back
 Label(eq_top, text="Equaliser", font=("TkDefaultFont", 12, "bold")).pack(side=LEFT, padx=10)
 
+# --- preset dropdown row ---
+preset_row = Frame(eq_page)
+preset_row.pack(fill="x", padx=10, pady=(0, 5))
+
+Label(preset_row, text="Preset:").pack(side=LEFT)   #label so user know what the dropdown is for
+
+preset_var = StringVar(value="Flat")   #track which preset is selected, start flat
+#build list of preset names from the dict keys, order match how we defined them up top
+preset_names = list(PRESETS.keys()) + ["Custom"]   #custom at end for when user mess with sliders manually
+preset_menu = ttk.Combobox(preset_row, textvariable=preset_var, values=preset_names, state="readonly", width=14)
+preset_menu.pack(side=LEFT, padx=5)
+preset_menu.bind("<<ComboboxSelected>>", load_preset)   #fire load_preset when user pick something
+
 eq_bands_frame = Frame(eq_page)
 eq_bands_frame.pack(fill="x", padx=10, pady=10)
 
@@ -285,6 +327,9 @@ for i, band in enumerate(EQ_BANDS):
     var = DoubleVar(value=0)
     eq_vars.append(var)
     #vertical slider, up is boost (+12db) down is cut (-12db)
+    #trace on the var so we know when user manually moves slider vs preset loading
+    band_index = i   #capture i now or all lambdas end up using same i (classic python gotcha)
+    var.trace_add("write", lambda *args, idx=band_index: on_slider_move(idx, eq_vars[idx].get()))
     s = Scale(col, variable=var, from_=12, to=-12, orient=VERTICAL, resolution=0.5, length=150)
     s.pack()
     Label(col, text="dB", font=("TkDefaultFont", 7)).pack()
@@ -313,7 +358,7 @@ is_dark = "dark" in theme
 if is_dark:
     apply_dark(win)   #make everything dark go thru all widget recursiv
 
-
+# --- cleanup when close ---
 def on_close():   #VERY IMPORTANT must unload eq modules when close or stay in system forever
     if eq_sink_index is not None:
         subprocess.run(["pactl", "unload-module", str(eq_sink_index)], stderr=subprocess.DEVNULL)
@@ -325,4 +370,4 @@ win.protocol("WM_DELETE_WINDOW", on_close)   #connect X button to cleanup functi
 
 v1.set(get_volume())   
 refresh_app_sliders()  
-win.mainloop() 
+win.mainloop()
